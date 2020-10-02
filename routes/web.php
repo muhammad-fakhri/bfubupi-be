@@ -17,3 +17,6 @@ use Illuminate\Support\Str;
 $router->get('/', function () use ($router) {
     return $router->app->version();
 });
+
+$router->get('/link/{code}', 'LinkController@getByCode');
+$router->get('/link', 'LinkController@getAll');
