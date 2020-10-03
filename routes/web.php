@@ -18,6 +18,11 @@ $router->get('/', function () use ($router) {
 });
 
 $router->group(['prefix' => 'user'], function ($router) {
+    $router->group(['prefix' => 'email'], function ($router) {
+        $router->get('verify', 'AuthController@verifyEmail');
+        $router->post('resend', 'AuthController@resendVerificationEmail');
+    });
+
     $router->post('login', 'AuthController@login');
     $router->post('register', 'AuthController@register');
 });

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Mail\EmailConfirmation;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
@@ -67,6 +68,73 @@ class AuthController extends Controller
             $data = array('name' => $request->name, 'email' => $request->email, 'token' => $token);
             Mail::to($request->email)->send(new EmailConfirmation((object) $data));
             return response()->json(['code' => '201', 'message' => 'Registration is successful, please verify your email'], 201);
+        } catch (\Exception $exception) {
+            if ($exception instanceof ValidationException) {
+                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
+            }
+        }
+    }
+
+    public function verifyEmail(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'email' => 'required|email',
+                'token' => 'required'
+            ]);
+
+            $user = User::firstWhere('email', $request->get('email'));
+            if ($user->is_email_verified || strcmp($user->email_verify_token, $request->get('token') != 0)) {
+                return response()->json(['code' => '422', 'message' => 'Invalid token'], 422);
+            }
+
+            $user->is_email_verified = true;
+            $user->email_verify_token = null;
+            $user->email_verify_date = Carbon::now();
+            $user->save();
+
+            // TODO: redirect to success verify email page in frontend
+            return response()->json(['code' => '200', 'message' => 'Verify success']);
+        } catch (\Exception $exception) {
+            if ($exception instanceof ValidationException) {
+                // TODO: redirect to failed verify email page in frontend
+                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
+            } else {
+                // Email not found
+                // TODO: redirect to failed verify email page in frontend
+                return response()->json(['code' => '422', 'message' => 'Invalid token'], 422);
+            }
+        }
+    }
+
+    public function resendVerificationEmail(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'email' => 'required|email',
+            ]);
+
+            $user = User::firstWhere('email', $request->email);
+
+            // Account not found
+            if (!$user) {
+                return response()->json(['code' => '404', 'message' => 'No accounts found with this email'], 404);
+            }
+
+            // Generate new email verification token
+            $token = random_bytes(8);
+            $token = bin2hex($token);
+
+            $user->is_email_verified = false;
+            $user->email_verify_token = $token;
+            $user->email_verify_date = null;
+            $user->save();
+
+            // Resend verification email
+            $data = array('name' => $request->name, 'email' => $request->email, 'token' => $token);
+            Mail::to($request->email)->send(new EmailConfirmation((object) $data));
+
+            return response()->json(['code' => '200', 'message' => 'Resend success, please check your email'], 200);
         } catch (\Exception $exception) {
             if ($exception instanceof ValidationException) {
                 return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
