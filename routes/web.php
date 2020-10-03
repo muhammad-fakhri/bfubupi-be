@@ -12,10 +12,14 @@
 | and give it the Closure to call when that URI is requested.
 |
 */
-use Illuminate\Support\Str;
 
 $router->get('/', function () use ($router) {
     return $router->app->version();
+});
+
+$router->group(['prefix' => 'user'], function ($router) {
+    $router->post('login', 'AuthController@login');
+    $router->post('register', 'AuthController@register');
 });
 
 $router->get('/link/{code}', 'LinkController@getByCode');
