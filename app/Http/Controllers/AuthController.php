@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Mail\EmailConfirmation;
 use App\Mail\ForgotPassword;
+use App\Models\Admin;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Auth\Notifications\ResetPassword;
@@ -23,8 +24,7 @@ class AuthController extends Controller
                 'password' => 'required'
             ]);
 
-            $customClaims = ['role' => 'user'];
-            $token = app('auth')->claims($customClaims)->attempt($request->only('email', 'password'));
+            $token = auth('user')->claims(['role' => 'user'])->attempt($request->only('email', 'password'));
             if ($token) {
                 $user = User::where('email', $request->email)->first();
                 $json_user = $user->toArray();
@@ -210,6 +210,38 @@ class AuthController extends Controller
         } catch (\Exception $exception) {
             if ($exception instanceof ValidationException) {
                 return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
+            }
+        }
+    }
+
+    public function adminLogin(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'email' => 'required|email',
+                'password' => 'required'
+            ]);
+
+            $admin = Admin::where('email', $request->email)->first();
+            if (!$admin) {
+                return response()->json(['code' => '401', 'message' => 'Your email or password is wrong'], 401);
+            }
+            $role = '';
+            $admin->is_super_admin ? $role = 'superadmin' : $role = 'admin';
+            $token = auth('admin')->claims(['role' => $role])->attempt($request->only('email', 'password'));
+
+            if ($token) {
+                $json_user = $admin->toArray();
+                $json_user['jwt_token'] = $token;
+                return response()->json(['code' => '200', 'data' => $json_user]);
+            } else {
+                return response()->json(['code' => '401', 'message' => 'Your email or password is wrong']);
+            }
+        } catch (\Exception $exception) {
+            if ($exception instanceof ValidationException) {
+                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
+            } else {
+                return response()->json(['code' => '500', 'message' => 'Internal server error'], 500);
             }
         }
     }

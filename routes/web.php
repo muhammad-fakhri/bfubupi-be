@@ -17,11 +17,14 @@ $router->get('/', function () use ($router) {
     return $router->app->version();
 });
 
-$router->group(['middleware' => ['auth', 'superadmin'], 'prefix' => 'admin'], function ($router) {
-    $router->get('/', 'AdminController@getAllSubadmin');
-    $router->post('/', 'AdminController@createSubadmin');
-    $router->put('/', 'AdminController@updateSubadmin');
-    $router->post('/delete', 'AdminController@deleteSubadmin');
+$router->group(['prefix' => 'admin'], function ($router) {
+    $router->post('/login', 'AuthController@adminLogin');
+    $router->group(['middleware' => ['auth:admin', 'superadmin']], function ($router) {
+        $router->post('/delete', 'AdminController@deleteSubadmin');
+        $router->get('/', 'AdminController@getAllSubadmin');
+        $router->post('/', 'AdminController@createSubadmin');
+        $router->put('/', 'AdminController@updateSubadmin');
+    });
 });
 
 $router->group(['prefix' => 'user'], function ($router) {
@@ -37,7 +40,7 @@ $router->group(['prefix' => 'user'], function ($router) {
 
     $router->post('login', 'AuthController@login');
     $router->post('register', 'AuthController@register');
-    $router->group(['middleware' => 'auth'], function ($router) {
+    $router->group(['middleware' => 'auth:user'], function ($router) {
         $router->group(['middleware' => 'profile'], function ($router) {
             $router->get('{user_id}', 'UserController@getUserProfile');
             $router->put('{user_id}', 'UserController@updateUserProfile');
