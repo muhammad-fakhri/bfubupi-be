@@ -23,6 +23,11 @@ $router->group(['prefix' => 'user'], function ($router) {
         $router->post('resend', 'AuthController@resendVerificationEmail');
     });
 
+    $router->group(['prefix' => 'password'], function ($router) {
+        $router->post('forgot', 'AuthController@requestForgotPassword');
+        $router->post('reset', 'AuthController@resetPassword');
+    });
+
     $router->post('login', 'AuthController@login');
     $router->post('register', 'AuthController@register');
 });

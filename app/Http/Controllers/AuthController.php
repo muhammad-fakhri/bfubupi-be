@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Mail\EmailConfirmation;
+use App\Mail\ForgotPassword;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 use Tymon\JWTAuth\Exceptions\JWTException;
@@ -134,7 +137,72 @@ class AuthController extends Controller
             $data = array('name' => $request->name, 'email' => $request->email, 'token' => $token);
             Mail::to($request->email)->send(new EmailConfirmation((object) $data));
 
-            return response()->json(['code' => '200', 'message' => 'Resend success, please check your email'], 200);
+            return response()->json(['code' => '200', 'message' => 'Resend success, please check your email']);
+        } catch (\Exception $exception) {
+            if ($exception instanceof ValidationException) {
+                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
+            }
+        }
+    }
+
+    public function requestForgotPassword(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'email' => 'required|email'
+            ]);
+
+            $user = User::firstWhere('email', $request->email);
+
+            // Account not found
+            if (!$user) {
+                return response()->json(['code' => '404', 'message' => 'No accounts found with this email'], 404);
+            }
+
+            // Generate new change password token
+            $token = random_bytes(8);
+            $token = bin2hex($token);
+
+            $user->change_password_token = $token;
+            $user->save();
+
+            // Send forgot password email
+            $data = array('name' => $user->name, 'email' => $request->email, 'token' => $token);
+            Mail::to($request->email)->send(new ForgotPassword((object) $data));
+
+            return response()->json(['code' => '200', 'message' => 'Success']);
+        } catch (\Exception $exception) {
+            if ($exception instanceof ValidationException) {
+                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
+            }
+        }
+    }
+
+    public function resetPassword(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'email' => 'required|email',
+                'token' => 'required',
+                'password' => 'required'
+            ]);
+
+            $user = User::firstWhere('email', $request->get('email'));
+
+            // user account not exist
+            if (!$user) {
+                return response()->json(['code' => '422', 'message' => 'Invalid token'], 422);
+            }
+
+            if (strcmp($user->change_password_token, $request->get('token')) == 0) {
+                $user->password = Hash::make($request->get('password'));
+                $user->save();
+            } else {
+                // token mismatch
+                return response()->json(['code' => '422', 'message' => 'Invalid token'], 422);
+            }
+
+            return response()->json(['code' => '200', 'message' => 'Success']);
         } catch (\Exception $exception) {
             if ($exception instanceof ValidationException) {
                 return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
