@@ -30,6 +30,13 @@ $router->group(['prefix' => 'user'], function ($router) {
 
     $router->post('login', 'AuthController@login');
     $router->post('register', 'AuthController@register');
+    $router->group(['middleware' => 'auth'], function ($router) {
+        $router->group(['middleware' => 'profile'], function ($router) {
+            $router->get('{user_id}', 'UserController@getUserProfile');
+            $router->put('{user_id}', 'UserController@updateUserProfile');
+        });
+        $router->get('/', ['middleware' => 'admin', 'UserController@getAllUser']);
+    });
 });
 
 $router->get('/link/{code}', 'LinkController@getByCode');
