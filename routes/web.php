@@ -17,6 +17,13 @@ $router->get('/', function () use ($router) {
     return $router->app->version();
 });
 
+$router->group(['middleware' => ['auth', 'superadmin'], 'prefix' => 'admin'], function ($router) {
+    $router->get('/', 'AdminController@getAllSubadmin');
+    $router->post('/', 'AdminController@createSubadmin');
+    $router->put('/', 'AdminController@updateSubadmin');
+    $router->post('/delete', 'AdminController@deleteSubadmin');
+});
+
 $router->group(['prefix' => 'user'], function ($router) {
     $router->group(['prefix' => 'email'], function ($router) {
         $router->get('verify', 'AuthController@verifyEmail');
