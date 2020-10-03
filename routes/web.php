@@ -19,12 +19,22 @@ $router->get('/', function () use ($router) {
 
 $router->group(['prefix' => 'admin'], function ($router) {
     $router->post('/login', 'AuthController@adminLogin');
-    $router->group(['middleware' => ['auth:admin', 'superadmin']], function ($router) {
+    $router->group(['middleware' => 'superadmin'], function ($router) {
         $router->post('/delete', 'AdminController@deleteSubadmin');
         $router->get('/', 'AdminController@getAllSubadmin');
         $router->post('/', 'AdminController@createSubadmin');
         $router->put('/', 'AdminController@updateSubadmin');
     });
+});
+
+$router->group(['prefix' => 'payment'], function ($router) {
+    $router->group(['middleware' => 'superadmin'], function ($router) {
+        $router->post('/delete', 'AdminController@deleteSubadmin');
+        $router->get('/', 'AdminController@getAllSubadmin');
+        $router->post('/', 'AdminController@createSubadmin');
+        $router->put('/', 'AdminController@updateSubadmin');
+    });
+    $router->get('/', 'AuthController@adminLogin');
 });
 
 $router->group(['prefix' => 'user'], function ($router) {
@@ -40,13 +50,12 @@ $router->group(['prefix' => 'user'], function ($router) {
 
     $router->post('login', 'AuthController@login');
     $router->post('register', 'AuthController@register');
-    $router->group(['middleware' => 'auth:user'], function ($router) {
-        $router->group(['middleware' => 'profile'], function ($router) {
-            $router->get('{user_id}', 'UserController@getUserProfile');
-            $router->put('{user_id}', 'UserController@updateUserProfile');
-        });
-        $router->get('/', ['middleware' => 'admin', 'UserController@getAllUser']);
+
+    $router->group(['middleware' => 'specific'], function ($router) {
+        $router->get('{user_id}', 'UserController@getUserProfile');
+        $router->put('{user_id}', 'UserController@updateUserProfile');
     });
+    $router->get('/', ['middleware' => ['admin'], 'uses' => 'UserController@getAllUser']);
 });
 
 $router->get('/link/{code}', 'LinkController@getByCode');

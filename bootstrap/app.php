@@ -79,7 +79,7 @@ $app->configure('app');
 $app->routeMiddleware([
     'auth' => App\Http\Middleware\Authenticate::class,
     'admin' => App\Http\Middleware\AdminAuthMiddleware::class,
-    'profile' => App\Http\Middleware\ProfileMiddleware::class,
+    'specific' => App\Http\Middleware\UserSpecificMiddleware::class,
     'superadmin' => App\Http\Middleware\SuperadminAuthMiddleware::class
 ]);
 

@@ -5,7 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
-class SuperadminAuthMiddleware
+class UserSpecificMiddleware
 {
     /**
      * Handle an incoming request.
@@ -20,10 +20,13 @@ class SuperadminAuthMiddleware
             $token = JWTAuth::getToken();
             $apy = JWTAuth::getPayload($token);
             $role = $apy->get('role');
-            if ($role && strcmp($role, 'superadmin') == 0) {
-                return $next($request);
+            if (strcmp($role, 'user') == 0) {
+                $user = JWTAuth::parseToken()->authenticate();
+                if ($user->id != $request->route('user_id')) {
+                    return response()->json(['code' => '403', 'message' => "You don't have access to this resource"], 403);
+                }
             }
-            return response()->json(['code' => '403', 'message' => "You don't have access to this resource"], 403);
+            return $next($request);
         } catch (\Exception $exception) {
             return response()->json(['code' => '401', 'message' => 'You are unauthorized'], 401);
         }
