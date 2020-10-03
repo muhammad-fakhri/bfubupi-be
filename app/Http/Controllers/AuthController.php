@@ -63,7 +63,11 @@ class AuthController extends Controller
             $token = bin2hex($token);
 
             // Create new user data
-            $user = User::create($request->all());
+            $user = new User;
+            $user->name = $request->name;
+            $user->school_name = $request->school_name;
+            $user->email = $request->email;
+            $user->password = Hash::make($request->password);
             $user->email_verify_token = $token;
             $user->save();
 
