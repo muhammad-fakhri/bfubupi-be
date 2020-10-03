@@ -79,6 +79,7 @@ $app->configure('app');
 $app->routeMiddleware([
     'auth' => App\Http\Middleware\Authenticate::class,
     'admin' => App\Http\Middleware\AdminAuthMiddleware::class,
+    'profile' => App\Http\Middleware\ProfileMiddleware::class,
 ]);
 
 /*
