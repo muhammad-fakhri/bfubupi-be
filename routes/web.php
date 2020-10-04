@@ -27,6 +27,16 @@ $router->group(['prefix' => 'admin'], function ($router) {
     });
 });
 
+$router->group(['prefix' => 'paper', 'middleware' => 'all'], function ($router) {
+    $router->group(['middleware' => 'admin'], function ($router) {
+        $router->get('/check/{paper_id}', 'PaperController@checkPaper');
+        $router->get('/', 'PaperController@getAllPaper');
+    });
+    $router->post('/delete', 'PaperController@deletePaper');
+    $router->post('/upload', 'PaperController@uploadPaper');
+    $router->get('{user_id}', 'PaperController@getPaperByUser');
+});
+
 $router->group(['prefix' => 'payment', 'middleware' => 'all'], function ($router) {
     $router->group(['middleware' => 'admin'], function ($router) {
         $router->get('/check/{payment_id}', 'PaymentController@checkPayment');
