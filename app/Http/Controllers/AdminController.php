@@ -3,9 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Admin;
+use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+
+use function PHPUnit\Framework\throwException;
 
 class AdminController extends Controller
 {
@@ -20,7 +24,7 @@ class AdminController extends Controller
         try {
             $this->validate($request, [
                 'name' => 'required',
-                'email' => 'required|email',
+                'email' => 'required|email|unique:admins,email',
                 'password' => 'required'
             ]);
             $admin = new Admin;
@@ -47,6 +51,9 @@ class AdminController extends Controller
             ]);
 
             $admin = Admin::find($request->id);
+            if (!$admin) {
+                throw new ModelNotFoundException();
+            }
             $admin->name = $request->name;
             $admin->email = $request->email;
             if ($request->has('password')) {
@@ -67,6 +74,9 @@ class AdminController extends Controller
             ]);
 
             $admin = Admin::find($request->admin_id);
+            if (!$admin) {
+                throw new ModelNotFoundException();
+            }
             $admin->delete();
 
             return response()->json(['code' => '200', 'message' => 'Success']);
