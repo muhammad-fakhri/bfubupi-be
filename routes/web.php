@@ -27,14 +27,14 @@ $router->group(['prefix' => 'admin'], function ($router) {
     });
 });
 
-$router->group(['prefix' => 'payment'], function ($router) {
-    $router->group(['middleware' => 'superadmin'], function ($router) {
-        $router->post('/delete', 'AdminController@deleteSubadmin');
-        $router->get('/', 'AdminController@getAllSubadmin');
-        $router->post('/', 'AdminController@createSubadmin');
-        $router->put('/', 'AdminController@updateSubadmin');
+$router->group(['prefix' => 'payment', 'middleware' => 'all'], function ($router) {
+    $router->group(['middleware' => 'admin'], function ($router) {
+        $router->get('/check/{payment_id}', 'PaymentController@checkPayment');
+        $router->get('/', 'PaymentController@getAllPayment');
     });
-    $router->get('/', 'AuthController@adminLogin');
+    $router->post('/delete', 'PaymentController@deletePayment');
+    $router->post('/upload', 'PaymentController@uploadPayment');
+    $router->get('{user_id}', 'PaymentController@getPaymentByUser');
 });
 
 $router->group(['prefix' => 'user'], function ($router) {
