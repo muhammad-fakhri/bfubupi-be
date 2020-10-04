@@ -1,6 +1,6 @@
 {
-    "name": "laravel/lumen",
-    "description": "The Laravel Lumen Framework.",
+    "name": "bfubupi-be",
+    "description": "API for BFUB UPI",
     "keywords": ["framework", "laravel", "lumen"],
     "license": "MIT",
     "type": "project",
