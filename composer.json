@@ -1,5 +1,5 @@
 {
-    "name": "bfubupi-be",
+    "name": "bfubupi/bfubupi-be",
     "description": "API for BFUB UPI",
     "keywords": ["framework", "laravel", "lumen"],
     "license": "MIT",
