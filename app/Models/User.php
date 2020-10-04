@@ -28,12 +28,12 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
      */
     public function payments()
     {
-        return $this->hasMany('App\Payment');
+        return $this->hasMany('App\Models\Payment');
     }
 
     public function papers()
     {
-        return $this->hasMany('App\Paper');
+        return $this->hasMany('App\Models\Paper');
     }
 
     /**
