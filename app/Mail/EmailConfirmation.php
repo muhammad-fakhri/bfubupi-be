@@ -31,12 +31,12 @@ class EmailConfirmation extends Mailable
     {
         return $this
             ->subject('BFUB UPI | Email Verification')
-            ->markdown('view.mails.email_confirmation')
+            ->markdown('mails.email_confirmation')
             ->with([
                 'name' => $this->data->name,
                 'email' => $this->data->email,
                 'token' => $this->data->token
             ])
-            ->text('view.mails.email_confirmation');
+            ->text('mails.email_confirmation_plain_text');
     }
 }

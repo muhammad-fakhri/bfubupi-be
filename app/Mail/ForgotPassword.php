@@ -31,12 +31,12 @@ class ForgotPassword extends Mailable
     {
         return $this
             ->subject('BFUB UPI | Forgot Password')
-            ->markdown('view.mails.forgot_password')
+            ->markdown('mails.forgot_password')
             ->with([
                 'name' => $this->data->name,
                 'email' => $this->data->email,
                 'token' => $this->data->token
             ])
-            ->text('view.mails.forgot_password');
+            ->text('mails.forgot_password_plain_text');
     }
 }

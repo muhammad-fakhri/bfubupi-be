@@ -47,7 +47,7 @@ class AuthController extends Controller
         try {
             $this->validate($request, [
                 'name' => 'required',
-                'school_name' => 'require',
+                'school_name' => 'required',
                 'email' => 'required|email',
                 'password' => 'required'
             ]);
@@ -91,7 +91,7 @@ class AuthController extends Controller
             ]);
 
             $user = User::firstWhere('email', $request->get('email'));
-            if ($user->is_email_verified || strcmp($user->email_verify_token, $request->get('token') != 0)) {
+            if ($user->is_email_verified || strcmp($user->email_verify_token, $request->get('token')) != 0) {
                 return response()->json(['code' => '422', 'message' => 'Invalid token'], 422);
             }
 
@@ -138,7 +138,7 @@ class AuthController extends Controller
             $user->save();
 
             // Resend verification email
-            $data = array('name' => $request->name, 'email' => $request->email, 'token' => $token);
+            $data = array('name' => $user->name, 'email' => $request->email, 'token' => $token);
             Mail::to($request->email)->send(new EmailConfirmation((object) $data));
 
             return response()->json(['code' => '200', 'message' => 'Resend success, please check your email']);
@@ -200,6 +200,7 @@ class AuthController extends Controller
 
             if (strcmp($user->change_password_token, $request->get('token')) == 0) {
                 $user->password = Hash::make($request->get('password'));
+                $user->change_password_token = null;
                 $user->save();
             } else {
                 // token mismatch

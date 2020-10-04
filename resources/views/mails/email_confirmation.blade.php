@@ -1,6 +1,6 @@
 @component('mail::panel')
 ## Halo, {{ $name }}.
-Anda berhasil mendaftar di BFUB UPI menggunakan email {{ $email}}.
+Anda berhasil mendaftar di BFUB UPI menggunakan email {{ $email }}.
 Sebelum bisa melanjutkan, silakan konfirmasi email anda dengan menekan tombol dibawah ini.
 @endcomponent
 
