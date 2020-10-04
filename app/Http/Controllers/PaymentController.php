@@ -4,8 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Payment;
 use App\Models\User;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
 use Illuminate\Validation\ValidationException;
 
 class PaymentController extends Controller
@@ -16,19 +17,35 @@ class PaymentController extends Controller
         return response()->json(['code' => '200', 'data' => $payments]);
     }
 
-    public function checkPayment(Request $request)
+    public function checkPayment($payment_id)
     {
-        $payment = Payment::find($request->get('payment_id'));
-        $payment->is_checked = true;
-        $payment->save();
-        return response()->json(['code' => '200', 'message' => 'Success']);
+        try {
+            $payment = Payment::findOrFail($payment_id);
+            $payment->is_checked = true;
+            $payment->save();
+            return response()->json(['code' => '200', 'message' => 'Success']);
+        } catch (\Exception $exception) {
+            if ($exception instanceof ModelNotFoundException) {
+                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
+            } else {
+                return response()->json(['code' => '500', 'message' => 'Internal server error'], 500);
+            }
+        }
     }
 
-    public function getPaymentByUser(Request $request)
+    public function getPaymentByUser($user_id)
     {
-        $user = User::find($request->get('user_id'));
-        $payments = $user->payments;
-        return response()->json(['code' => '200', 'data' => $payments]);
+        try {
+            $user = User::findOrFail($user_id);
+            $payments = $user->payments;
+            return response()->json(['code' => '200', 'data' => $payments]);
+        } catch (\Exception $exception) {
+            if ($exception instanceof ModelNotFoundException) {
+                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
+            } else {
+                return response()->json(['code' => '500', 'message' => 'Internal server error'], 500);
+            }
+        }
     }
 
     public function uploadPayment(Request $request)
@@ -37,25 +54,34 @@ class PaymentController extends Controller
             $this->validate($request, [
                 'user_id' => 'required|exists:users,id',
                 'payment_title' => 'required',
-                'payment_receipt_image' => 'required|mimes:png,jpg',
+                'payment_receipt_image' => 'required|mimes:png,jpeg',
             ]);
 
-            $image = $request->file('payment_receipt_image');
-            $filename = $image->getClientOriginalName();
-            $extension = $image->getClientOriginalExtension();
-            $unique_name = md5($filename . time());
-            $path = $image->storeAs('payment', $unique_name . '.' . $extension);
+            // Find the user
+            $user = User::findOrFail($request->user_id);
 
-            $user = User::find($request->user_id);
+            // Generate file name and destination path
+            $image = $request->file('payment_receipt_image');
+            $filename = uniqid() . '_' . $image->getClientOriginalName();
+            $path = 'uploads' . DIRECTORY_SEPARATOR . 'payment' . DIRECTORY_SEPARATOR;
+            $destinationPath = public_path($path);
+            File::makeDirectory($destinationPath, 0777, true, true);
+
+            // Move file to destination path with generated filename
+            $image->move($destinationPath, $filename);
+
+            // Create new payment model attached to user model
             $payment = $user->payments()->create([
                 'payment_title' => $request->input('payment_title'),
                 'payment_description' => $request->input('payment_description', null),
-                'payment_file_name' => $unique_name . '.' . $extension,
-                'payment_file_path' => $path
+                'payment_file_name' => $filename,
+                'payment_file_path' => $path . $filename
             ]);
             return response()->json(['code' => '200', 'message' => 'Success']);
         } catch (\Exception $exception) {
             if ($exception instanceof ValidationException) {
+                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
+            } elseif ($exception instanceof ModelNotFoundException) {
                 return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
             } else {
                 return response()->json(['code' => '500', 'message' => 'Internal server error'], 500);
@@ -67,15 +93,23 @@ class PaymentController extends Controller
     {
         try {
             $this->validate($request, [
-                'payment_id' => 'required|exists:payment,id'
+                'payment_id' => 'required|exists:payments,id'
             ]);
-            $payment = Payment::find($request->payment_id);
-            Storage::delete($payment->payment_file_path);
+            $payment = Payment::findOrFail($request->payment_id);
+
+            // Delete payment file
+            unlink(public_path($payment->payment_file_path));
+
+            // Delete payment model
             $payment->delete();
             return response()->json(['code' => '200', 'message' => 'Success']);
         } catch (\Exception $exception) {
             if ($exception instanceof ValidationException) {
                 return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
+            } elseif ($exception instanceof ModelNotFoundException) {
+                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
+            } else {
+                return response()->json(['code' => '500', 'message' => 'Internal server error'], 500);
             }
         }
     }
