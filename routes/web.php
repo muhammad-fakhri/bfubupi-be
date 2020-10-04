@@ -14,7 +14,7 @@
 */
 
 $router->get('/', function () use ($router) {
-    return $router->app->version();
+    return response()->json(['code' => '200', 'message' => 'Welcome to BFUB UPI API']);
 });
 
 $router->group(['prefix' => 'admin'], function ($router) {
