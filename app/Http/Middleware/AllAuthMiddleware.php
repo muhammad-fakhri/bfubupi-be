@@ -6,7 +6,7 @@ use Closure;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
-class AdminAuthMiddleware
+class AllAuthMiddleware
 {
     /**
      * Handle an incoming request.
@@ -21,10 +21,9 @@ class AdminAuthMiddleware
             $token = JWTAuth::getToken();
             $apy = JWTAuth::getPayload($token);
             $role = $apy->get('role');
-            if ($role && (strcmp($role, 'admin') == 0 || strcmp($role, 'superadmin') == 0)) {
+            if ($role && (strcmp($role, 'admin') == 0 || strcmp($role, 'superadmin') == 0) || strcmp($role, 'user') == 0) {
                 return $next($request);
             }
-            return response()->json(['code' => '403', 'message' => "You don't have access to this resource"], 403);
         } catch (\Exception $exception) {
             if ($exception instanceof JWTException) {
                 return response()->json(['code' => '401', 'message' => 'You are unauthorized'], 401);

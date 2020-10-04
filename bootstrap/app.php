@@ -80,7 +80,8 @@ $app->routeMiddleware([
     'auth' => App\Http\Middleware\Authenticate::class,
     'admin' => App\Http\Middleware\AdminAuthMiddleware::class,
     'specific' => App\Http\Middleware\UserSpecificMiddleware::class,
-    'superadmin' => App\Http\Middleware\SuperadminAuthMiddleware::class
+    'superadmin' => App\Http\Middleware\SuperadminAuthMiddleware::class,
+    'all' => App\Http\Middleware\AllAuthMiddleware::class
 ]);
 
 /*

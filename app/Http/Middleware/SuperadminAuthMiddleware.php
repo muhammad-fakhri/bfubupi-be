@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Closure;
+use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class SuperadminAuthMiddleware
@@ -25,7 +26,11 @@ class SuperadminAuthMiddleware
             }
             return response()->json(['code' => '403', 'message' => "You don't have access to this resource"], 403);
         } catch (\Exception $exception) {
-            return response()->json(['code' => '401', 'message' => 'You are unauthorized'], 401);
+            if ($exception instanceof JWTException) {
+                return response()->json(['code' => '401', 'message' => 'You are unauthorized'], 401);
+            } else {
+                return response()->json(['code' => '500', 'message' => 'Internal server error'], 500);
+            }
         }
     }
 }
