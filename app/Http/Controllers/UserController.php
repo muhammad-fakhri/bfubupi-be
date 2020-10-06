@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
@@ -18,6 +19,11 @@ class UserController extends Controller
         //
     }
 
+    public function unexpectedError()
+    {
+        return response()->json(['code' => '500', 'message' => 'Unexpected error']);
+    }
+
     public function getAllUser()
     {
         $users = User::all();
@@ -27,10 +33,10 @@ class UserController extends Controller
     public function getUserProfile($user_id)
     {
         try {
-            $user = User::find($user_id);
+            $user = User::findOrFail($user_id);
             return response()->json(['code' => '200', 'data' => $user]);
         } catch (\Exception $exception) {
-            return response()->json(['code' => '500', 'message' => 'Internal server error'], 500);
+            $this->unexpectedError();
         }
     }
 
@@ -42,7 +48,7 @@ class UserController extends Controller
                 'school_name' => 'required'
             ]);
 
-            $user = User::find($user_id);
+            $user = User::findOrFail($user_id);
             $user->name = $request->name;
             $user->school_name = $request->school_name;
             $user->save();
@@ -50,9 +56,9 @@ class UserController extends Controller
         } catch (\Exception $exception) {
             if ($exception instanceof ValidationException) {
                 return response()->json(['code' => '400', 'message' => 'Bad Request'], 400);
-            } else {
-                return response()->json(['code' => '500', 'message' => 'Internal server error'], 500);
-            }
+            } else if ($exception instanceof ModelNotFoundException) {
+                return response()->json(['code' => '400', 'message' => 'Bad Request'], 400);
+            } else $this->unexpectedError();
         }
     }
 }

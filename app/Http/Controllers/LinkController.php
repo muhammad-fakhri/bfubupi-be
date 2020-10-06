@@ -3,12 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Link;
-use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class LinkController extends Controller
 {
+    public function unexpectedError()
+    {
+        return response()->json(['code' => '500', 'message' => 'Unexpected error']);
+    }
+
     public function getAll()
     {
         $links = Link::all();
@@ -23,7 +27,7 @@ class LinkController extends Controller
         } catch (\Exception $exception) {
             if ($exception instanceof ModelNotFoundException) {
                 return response()->json(['code' => 404, 'message' => 'Link with given code is not found'], 404);
-            }
+            } else $this->unexpectedError();
         }
     }
 }

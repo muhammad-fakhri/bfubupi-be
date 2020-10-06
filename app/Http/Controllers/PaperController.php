@@ -7,11 +7,15 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class PaperController extends Controller
 {
+    public function unexpectedError()
+    {
+        return response()->json(['code' => '500', 'message' => 'Unexpected error']);
+    }
+
     public function getAllPaper()
     {
         $papers = Paper::all();
@@ -28,9 +32,7 @@ class PaperController extends Controller
         } catch (\Exception $exception) {
             if ($exception instanceof ModelNotFoundException) {
                 return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
-            } else {
-                return response()->json(['code' => '500', 'message' => 'Internal server error'], 500);
-            }
+            } else $this->unexpectedError();
         }
     }
 
@@ -43,9 +45,7 @@ class PaperController extends Controller
         } catch (\Exception $exception) {
             if ($exception instanceof ModelNotFoundException) {
                 return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
-            } else {
-                return response()->json(['code' => '500', 'message' => 'Internal server error'], 500);
-            }
+            } else $this->unexpectedError();
         }
     }
 
@@ -82,9 +82,7 @@ class PaperController extends Controller
                 return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
             } elseif ($exception instanceof ModelNotFoundException) {
                 return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
-            } else {
-                return response()->json(['code' => '500', 'message' => 'Internal server error'], 500);
-            }
+            } else $this->unexpectedError();
         }
     }
 
@@ -107,9 +105,7 @@ class PaperController extends Controller
                 return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
             } elseif ($exception instanceof ModelNotFoundException) {
                 return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
-            } else {
-                return response()->json(['code' => '500', 'message' => 'Internal server error'], 500);
-            }
+            } else $this->unexpectedError();
         }
     }
 }

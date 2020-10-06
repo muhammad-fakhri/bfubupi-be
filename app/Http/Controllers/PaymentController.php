@@ -11,6 +11,11 @@ use Illuminate\Validation\ValidationException;
 
 class PaymentController extends Controller
 {
+    public function unexpectedError()
+    {
+        return response()->json(['code' => '500', 'message' => 'Unexpected error']);
+    }
+
     public function getAllPayment()
     {
         $payments = Payment::all();
@@ -27,9 +32,7 @@ class PaymentController extends Controller
         } catch (\Exception $exception) {
             if ($exception instanceof ModelNotFoundException) {
                 return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
-            } else {
-                return response()->json(['code' => '500', 'message' => 'Internal server error'], 500);
-            }
+            } else $this->unexpectedError();
         }
     }
 
@@ -42,9 +45,7 @@ class PaymentController extends Controller
         } catch (\Exception $exception) {
             if ($exception instanceof ModelNotFoundException) {
                 return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
-            } else {
-                return response()->json(['code' => '500', 'message' => 'Internal server error'], 500);
-            }
+            } else $this->unexpectedError();
         }
     }
 
@@ -83,9 +84,7 @@ class PaymentController extends Controller
                 return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
             } elseif ($exception instanceof ModelNotFoundException) {
                 return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
-            } else {
-                return response()->json(['code' => '500', 'message' => 'Internal server error'], 500);
-            }
+            } else $this->unexpectedError();
         }
     }
 
@@ -108,9 +107,7 @@ class PaymentController extends Controller
                 return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
             } elseif ($exception instanceof ModelNotFoundException) {
                 return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
-            } else {
-                return response()->json(['code' => '500', 'message' => 'Internal server error'], 500);
-            }
+            } else $this->unexpectedError();
         }
     }
 }

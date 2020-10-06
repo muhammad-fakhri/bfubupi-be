@@ -3,16 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Models\Admin;
-use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
-use function PHPUnit\Framework\throwException;
-
 class AdminController extends Controller
 {
+
+    public function unexpectedError()
+    {
+        return response()->json(['code' => '500', 'message' => 'Unexpected error']);
+    }
+
     public function getAllSubadmin()
     {
         $admins = Admin::all();
@@ -36,7 +39,7 @@ class AdminController extends Controller
         } catch (\Exception $exception) {
             if ($exception instanceof ValidationException) {
                 return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
-            }
+            } else $this->unexpectedError();
         }
     }
 
@@ -62,7 +65,9 @@ class AdminController extends Controller
             $admin->save();
             return response()->json(['code' => '200', 'message' => 'Success']);
         } catch (\Exception $exception) {
-            return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
+            if ($exception instanceof ValidationException) {
+                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
+            } else $this->unexpectedError();
         }
     }
 
@@ -81,7 +86,9 @@ class AdminController extends Controller
 
             return response()->json(['code' => '200', 'message' => 'Success']);
         } catch (\Exception $exception) {
-            return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
+            if ($exception instanceof ValidationException) {
+                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
+            } else $this->unexpectedError();
         }
     }
 }
