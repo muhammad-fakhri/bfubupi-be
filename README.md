@@ -10,6 +10,7 @@ This project is a backend service for official site of Bakti Formica Untuk Bangs
 -   [JSON Web Token Authentication for Laravel & Lumen](https://github.com/tymondesigns/jwt-auth)
 -   [Faker](https://github.com/fzaninotto/Faker)
 -   [Lumen Generator](https://github.com/flipboxstudio/lumen-generator)
+-   [Laravel CORS](https://github.com/fruitcake/laravel-cors)
 
 ## Set Up
 
