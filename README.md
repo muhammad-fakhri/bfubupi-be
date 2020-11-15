@@ -27,6 +27,13 @@ This project is a backend service for official site of Bakti Formica Untuk Bangs
 7. Set your mail credential in .env on key MAIL\_\*
 8. If you are in production, do not forget to set APP_ENV in .env to "production" and set APP_DEBUG to "false"
 
+## Run Dev Server
+
+1. Open terminal in your project folder
+2. Use below command in the terminal
+   `php artisan serve`
+3. Access development server in http://localhost:8000
+
 ## Developer Team
 
 -   Muhammad Fakhri ([@muhammad-fakhri](https://github.com/muhammad-fakhri))
