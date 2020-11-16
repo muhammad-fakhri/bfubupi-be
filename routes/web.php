@@ -58,13 +58,15 @@ $router->group(['prefix' => 'user'], function ($router) {
         $router->post('reset', 'AuthController@resetPassword');
     });
 
+    $router->group(['prefix' => 'profile'], function ($router) {
+        $router->get('/', 'UserController@getUserProfile');
+        $router->put('/', 'UserController@updateUserProfile');
+    });
+
     $router->post('login', 'AuthController@login');
     $router->post('register', 'AuthController@register');
 
-    $router->group(['middleware' => 'specific'], function ($router) {
-        $router->get('{user_id}', 'UserController@getUserProfile');
-        $router->put('{user_id}', 'UserController@updateUserProfile');
-    });
+
     $router->get('/', ['middleware' => ['admin'], 'uses' => 'UserController@getAllUser']);
 });
 

@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class UserController extends Controller
 {
@@ -30,17 +31,17 @@ class UserController extends Controller
         return response()->json(['code' => '200', 'data' => $users]);
     }
 
-    public function getUserProfile($user_id)
+    public function getUserProfile()
     {
         try {
-            $user = User::findOrFail($user_id);
+            $user = JWTAuth::parseToken()->authenticate();
             return response()->json(['code' => '200', 'data' => $user]);
         } catch (\Exception $exception) {
             $this->unexpectedError();
         }
     }
 
-    public function updateUserProfile(Request $request, $user_id)
+    public function updateUserProfile(Request $request)
     {
         try {
             $this->validate($request, [
@@ -48,7 +49,7 @@ class UserController extends Controller
                 'school_name' => 'required'
             ]);
 
-            $user = User::findOrFail($user_id);
+            $user = JWTAuth::parseToken()->authenticate();
             $user->name = $request->name;
             $user->school_name = $request->school_name;
             $user->save();
