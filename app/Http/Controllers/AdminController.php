@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AdminController extends Controller
 {
@@ -20,6 +21,18 @@ class AdminController extends Controller
     {
         $admins = Admin::all();
         return response()->json(['code' => '200', 'data' => $admins]);
+    }
+
+    public function getAdminProfile()
+    {
+        try {
+            $token = JWTAuth::getToken();
+            $apy = JWTAuth::getPayload($token);
+            $admin = Admin::find($apy['sub']);
+            return response()->json(['code' => '200', 'data' => $admin]);
+        } catch (\Exception $exception) {
+            $this->unexpectedError();
+        }
     }
 
     public function createSubadmin(Request $request)
