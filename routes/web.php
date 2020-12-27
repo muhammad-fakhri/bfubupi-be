@@ -71,5 +71,8 @@ $router->group(['prefix' => 'user'], function ($router) {
     $router->get('/', ['middleware' => ['admin'], 'uses' => 'UserController@getAllUser']);
 });
 
-$router->get('/link/{code}', 'LinkController@getByCode');
-$router->get('/link', 'LinkController@getAll');
+$router->group(['prefix' => 'link'], function ($router) {
+    $router->get('/{code}', 'LinkController@getByCode');
+    $router->get('/', 'LinkController@getAll');
+    $router->put('/', ['middleware' => ['admin'], 'uses' => 'LinkController@updateLink']);
+});
