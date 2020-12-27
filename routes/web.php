@@ -28,6 +28,15 @@ $router->group(['prefix' => 'admin'], function ($router) {
     });
 });
 
+$router->group(['prefix' => 'announcement'], function ($router) {
+    $router->group(['middleware' => 'admin'], function ($router) {
+        $router->post('/', 'AnnouncementController@create');
+        $router->put('/', 'AnnouncementController@update');
+        $router->delete('/{id}', 'AnnouncementController@delete');
+    });
+    $router->get('/', 'AnnouncementController@getAll');
+});
+
 $router->group(['prefix' => 'paper', 'middleware' => 'all'], function ($router) {
     $router->group(['middleware' => 'admin'], function ($router) {
         $router->get('/check/{paper_id}', 'PaperController@checkPaper');
