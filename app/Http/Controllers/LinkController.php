@@ -36,7 +36,7 @@ class LinkController extends Controller
     {
         try {
             $this->validate($request, [
-                'id' => 'required|exists:links,id',
+                'id' => 'required',
                 'code' => 'required',
                 'value' => 'required'
             ]);
