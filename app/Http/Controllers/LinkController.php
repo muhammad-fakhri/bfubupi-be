@@ -57,4 +57,29 @@ class LinkController extends Controller
             } else $this->unexpectedError();
         }
     }
+
+    public function massUpdateLink(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'links' => 'required|array',
+            ]);
+
+            foreach ($request->links as $item) {
+                $link = Link::find($item['id']);
+
+                if (!$link) continue;
+
+                $link->code = $item['code'];
+                $link->value = $item['value'];
+                $link->save();
+            }
+
+            return response()->json(['code' => '200', 'message' => 'Success']);
+        } catch (\Exception $exception) {
+            if ($exception instanceof ValidationException) {
+                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
+            } else $this->unexpectedError();
+        }
+    }
 }
