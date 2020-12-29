@@ -21,10 +21,13 @@ $router->group(['prefix' => 'admin'], function ($router) {
     $router->post('/login', 'AuthController@adminLogin');
     $router->group(['middleware' => 'superadmin'], function ($router) {
         $router->post('/delete', 'AdminController@deleteSubadmin');
-        $router->get('/profile', 'AdminController@getAdminProfile');
         $router->get('/', 'AdminController@getAllSubadmin');
         $router->post('/', 'AdminController@createSubadmin');
         $router->put('/', 'AdminController@updateSubadmin');
+    });
+
+    $router->group(['middleware' => 'admin'], function ($router) {
+        $router->get('/profile', 'AdminController@getAdminProfile');
     });
 });
 
