@@ -16,8 +16,8 @@ class AnnouncementSeeder extends Seeder
     public function run()
     {
         DB::table('announcements')->insert([
-            'title' => 'Pengumuman 1',
-            'content' => 'Isi dari pengumuman 1',
+            'link' => 'Judul Pengumuman',
+            'content' => 'Konten pengumuman',
             'show' => true,
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now()
