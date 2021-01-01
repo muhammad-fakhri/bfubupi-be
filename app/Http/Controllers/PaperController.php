@@ -11,15 +11,14 @@ use Illuminate\Validation\ValidationException;
 
 class PaperController extends Controller
 {
-    public function unexpectedError()
-    {
-        return response()->json(['code' => '500', 'message' => 'Unexpected error']);
-    }
-
     public function getAllPaper()
     {
-        $papers = Paper::all();
-        return response()->json(['code' => '200', 'data' => $papers]);
+        try {
+            $papers = Paper::all();
+            return $this->successResponse($papers);
+        } catch (\Exception $exception) {
+            return $this->internalServerErrorResponse($exception);
+        }
     }
 
     public function checkPaper($paper_id)
@@ -28,11 +27,11 @@ class PaperController extends Controller
             $paper = Paper::findOrFail($paper_id);
             $paper->is_checked = true;
             $paper->save();
-            return response()->json(['code' => '200', 'message' => 'Success']);
+            return $this->successResponse();
         } catch (\Exception $exception) {
             if ($exception instanceof ModelNotFoundException) {
-                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
-            } else $this->unexpectedError();
+                return $this->badRequestResponse($exception);
+            } else $this->internalServerErrorResponse($exception);
         }
     }
 
@@ -41,11 +40,11 @@ class PaperController extends Controller
         try {
             $user = User::findOrFail($user_id);
             $papers = $user->papers;
-            return response()->json(['code' => '200', 'data' => $papers]);
+            return $this->successResponse($papers);
         } catch (\Exception $exception) {
             if ($exception instanceof ModelNotFoundException) {
-                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
-            } else $this->unexpectedError();
+                return $this->badRequestResponse($exception);
+            } else $this->internalServerErrorResponse($exception);
         }
     }
 
@@ -76,13 +75,13 @@ class PaperController extends Controller
                 'paper_file_name' => $filename,
                 'paper_file_path' => $path . $filename
             ]);
-            return response()->json(['code' => '200', 'message' => 'Success']);
+            return $this->successResponse($paper);
         } catch (\Exception $exception) {
             if ($exception instanceof ValidationException) {
-                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
+                return $this->badRequestResponse($exception);
             } elseif ($exception instanceof ModelNotFoundException) {
-                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
-            } else $this->unexpectedError();
+                return $this->notFoundResponse('User not found');
+            } else $this->internalServerErrorResponse($exception);
         }
     }
 
@@ -99,13 +98,13 @@ class PaperController extends Controller
 
             // Delete paper model
             $paper->delete();
-            return response()->json(['code' => '200', 'message' => 'Success']);
+            return $this->successResponse();
         } catch (\Exception $exception) {
             if ($exception instanceof ValidationException) {
-                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
+                return $this->badRequestResponse($exception);
             } elseif ($exception instanceof ModelNotFoundException) {
-                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
-            } else $this->unexpectedError();
+                return $this->notFoundResponse('Paper not found');
+            } else $this->internalServerErrorResponse($exception);
         }
     }
 }

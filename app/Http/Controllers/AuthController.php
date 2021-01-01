@@ -8,7 +8,6 @@ use App\Models\Admin;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Auth\AuthenticationException;
-use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Queue\InvalidPayloadException;
@@ -19,17 +18,12 @@ use Tymon\JWTAuth\Exceptions\JWTException;
 
 class AuthController extends Controller
 {
-    public function unexpectedError()
-    {
-        return response()->json(['code' => '500', 'message' => 'Unexpected error']);
-    }
-
     public function login(Request $request)
     {
         try {
             $this->validate($request, [
                 'email' => 'required|email',
-                'password' => 'required'
+                'password' => 'required',
             ]);
 
             $token = auth('user')->claims(['role' => 'user'])->attempt($request->only('email', 'password'));
@@ -37,16 +31,18 @@ class AuthController extends Controller
                 $user = User::where('email', $request->email)->first();
                 $json_user = $user->toArray();
                 $json_user['jwt_token'] = $token;
-                return response()->json(['code' => '200', 'data' => $json_user]);
+                return $this->successResponse($json_user);
             } else {
-                return response()->json(['code' => '401', 'message' => 'Your email or password is wrong']);
+                return $this->unauthorizedResponse('Your email or password is wrong');
             }
         } catch (\Exception $exception) {
             if ($exception instanceof ValidationException) {
-                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
+                return $this->badRequestResponse($exception);
             } elseif ($exception instanceof JWTException) {
-                return response()->json(['code' => '401', 'message' => 'Token error'], 401);
-            } else $this->unexpectedError();
+                return $this->unauthorizedResponse('Token error');
+            } else {
+                return $this->internalServerErrorResponse($exception);
+            }
         }
     }
 
@@ -57,13 +53,13 @@ class AuthController extends Controller
                 'name' => 'required',
                 'school_name' => 'required',
                 'email' => 'required|email',
-                'password' => 'required'
+                'password' => 'required',
             ]);
 
             // Check email already taken or not
             $email_taken = User::firstWhere('email', $request->email);
             if ($email_taken) {
-                return response()->json(['code' => '409', 'message' => 'Email already taken'], 409);
+                return $this->conflictResponse('Email already taken');
             }
 
             // Generate token for email verification
@@ -82,11 +78,14 @@ class AuthController extends Controller
             // Send verification email
             $data = array('name' => $request->name, 'email' => $request->email, 'token' => $token);
             Mail::to($request->email)->send(new EmailConfirmation((object) $data));
-            return response()->json(['code' => '201', 'message' => 'Registration is successful, please verify your email'], 201);
+
+            return $this->createdResponse(null, 'Registration is successful, please verify your email');
         } catch (\Exception $exception) {
             if ($exception instanceof ValidationException) {
-                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
-            } else $this->unexpectedError();
+                return $this->badRequestResponse($exception);
+            } else {
+                return $this->internalServerErrorResponse($exception);
+            }
         }
     }
 
@@ -95,11 +94,14 @@ class AuthController extends Controller
         try {
             $this->validate($request, [
                 'email' => 'required|email',
-                'token' => 'required'
+                'token' => 'required',
             ]);
 
             $user = User::firstWhere('email', $request->get('email'));
-            if (!$user) throw new ModelNotFoundException();
+            if (!$user) {
+                throw new ModelNotFoundException();
+            }
+
             if ($user->is_email_verified || strcmp($user->email_verify_token, $request->get('token')) != 0) {
                 throw new InvalidPayloadException();
             }
@@ -110,20 +112,22 @@ class AuthController extends Controller
             $user->save();
 
             // TODO: redirect to success verify email page in frontend
-            return response()->json(['code' => '200', 'message' => 'Verify success']);
+            return $this->successResponse(null, 'Verify success');
         } catch (\Exception $exception) {
             if ($exception instanceof ValidationException) {
                 // TODO: redirect to failed verify email page in frontend
-                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
+                return $this->badRequestResponse($exception);
             } else if ($exception instanceof ModelNotFoundException) {
                 // Account not exist
                 // TODO: redirect to failed verify email page in frontend
-                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
+                return $this->badRequestResponse($exception);
             } else if ($exception instanceof InvalidPayloadException) {
                 // Account already verified or token is invalid
                 // TODO: redirect to failed verify email page in frontend
-                return response()->json(['code' => '422', 'message' => 'Invalid token'], 422);
-            } else $this->unexpectedError();
+                return $this->unprocessableEntityResponse('Invalid token');
+            } else {
+                return $this->internalServerErrorResponse($exception);
+            }
         }
     }
 
@@ -137,7 +141,9 @@ class AuthController extends Controller
             $user = User::firstWhere('email', $request->email);
 
             // Account not found
-            if (!$user) throw new ModelNotFoundException();
+            if (!$user) {
+                throw new ModelNotFoundException();
+            }
 
             // Generate new email verification token
             $token = random_bytes(8);
@@ -152,13 +158,15 @@ class AuthController extends Controller
             $data = array('name' => $user->name, 'email' => $request->email, 'token' => $token);
             Mail::to($request->email)->send(new EmailConfirmation((object) $data));
 
-            return response()->json(['code' => '200', 'message' => 'Resend success, please check your email']);
+            return $this->successResponse(null, 'Resend success, please check your email');
         } catch (\Exception $exception) {
             if ($exception instanceof ValidationException) {
-                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
+                return $this->badRequestResponse($exception);
             } else if ($exception instanceof ModelNotFoundException) {
-                return response()->json(['code' => '404', 'message' => 'No accounts found with this email'], 404);
-            } else $this->unexpectedError();
+                return $this->notFoundResponse('No accounts found with this email');
+            } else {
+                return $this->internalServerErrorResponse($exception);
+            }
         }
     }
 
@@ -166,13 +174,15 @@ class AuthController extends Controller
     {
         try {
             $this->validate($request, [
-                'email' => 'required|email'
+                'email' => 'required|email',
             ]);
 
             $user = User::firstWhere('email', $request->email);
 
             // Account not found
-            if (!$user) throw new ModelNotFoundException();
+            if (!$user) {
+                throw new ModelNotFoundException();
+            }
 
             // Generate new change password token
             $token = random_bytes(8);
@@ -185,13 +195,15 @@ class AuthController extends Controller
             $data = array('name' => $user->name, 'email' => $request->email, 'token' => $token);
             Mail::to($request->email)->send(new ForgotPassword((object) $data));
 
-            return response()->json(['code' => '200', 'message' => 'Success']);
+            return $this->successResponse();
         } catch (\Exception $exception) {
             if ($exception instanceof ValidationException) {
-                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
+                return $this->badRequestResponse($exception);
             } else if ($exception instanceof ModelNotFoundException) {
-                return response()->json(['code' => '404', 'message' => 'No accounts found with this email'], 404);
-            } else $this->unexpectedError();
+                return $this->notFoundResponse('No accounts found with this email');
+            } else {
+                return $this->internalServerErrorResponse($exception);
+            }
         }
     }
 
@@ -201,13 +213,15 @@ class AuthController extends Controller
             $this->validate($request, [
                 'email' => 'required|email',
                 'token' => 'required',
-                'password' => 'required'
+                'password' => 'required',
             ]);
 
             $user = User::firstWhere('email', $request->get('email'));
 
             // user account not exist
-            if (!$user) throw new ModelNotFoundException();
+            if (!$user) {
+                throw new ModelNotFoundException();
+            }
 
             if (strcmp($user->change_password_token, $request->get('token')) == 0) {
                 $user->password = Hash::make($request->get('password'));
@@ -218,15 +232,15 @@ class AuthController extends Controller
                 throw new InvalidPayloadException();
             }
 
-            return response()->json(['code' => '200', 'message' => 'Success']);
+            return $this->successResponse();
         } catch (\Exception $exception) {
             if ($exception instanceof ValidationException) {
-                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
-            } else if ($exception instanceof ValidationException) {
-                return response()->json(['code' => '422', 'message' => 'Invalid token'], 422);
+                return $this->badRequestResponse($exception);
             } else if ($exception instanceof InvalidPayloadException) {
-                return response()->json(['code' => '422', 'message' => 'Invalid token'], 422);
-            } else $this->unexpectedError();
+                return $this->unprocessableEntityResponse('Invalid token');
+            } else {
+                return $this->internalServerErrorResponse($exception);
+            }
         }
     }
 
@@ -235,12 +249,14 @@ class AuthController extends Controller
         try {
             $this->validate($request, [
                 'email' => 'required|email',
-                'password' => 'required'
+                'password' => 'required',
             ]);
 
             $admin = Admin::where('email', $request->email)->first();
             // Admin account not exist
-            if (!$admin) throw new ModelNotFoundException();
+            if (!$admin) {
+                throw new ModelNotFoundException();
+            }
 
             $role = '';
             $admin->is_super_admin ? $role = 'superadmin' : $role = 'admin';
@@ -249,18 +265,20 @@ class AuthController extends Controller
             if ($token) {
                 $json_user = $admin->toArray();
                 $json_user['jwt_token'] = $token;
-                return response()->json(['code' => '200', 'data' => $json_user]);
+                return $this->successResponse($json_user);
             } else {
                 throw new AuthenticationException();
             }
         } catch (\Exception $exception) {
             if ($exception instanceof ValidationException) {
-                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
+                return $this->badRequestResponse($exception);
             } else if ($exception instanceof ModelNotFoundException) {
-                return response()->json(['code' => '401', 'message' => 'Your email or password is wrong'], 401);
+                return $this->notFoundResponse('Admin account not found');
             } else if ($exception instanceof AuthenticationException) {
-                return response()->json(['code' => '401', 'message' => 'Your email or password is wrong'], 401);
-            } else $this->unexpectedError();
+                return $this->unauthorizedResponse('Your email or password is wrong');
+            } else {
+                return $this->internalServerErrorResponse($exception);
+            }
         }
     }
 }

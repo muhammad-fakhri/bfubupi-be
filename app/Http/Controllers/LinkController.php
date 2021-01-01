@@ -3,32 +3,33 @@
 namespace App\Http\Controllers;
 
 use App\Models\Link;
-use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 class LinkController extends Controller
 {
-    public function unexpectedError()
-    {
-        return response()->json(['code' => '500', 'message' => 'Unexpected error']);
-    }
-
     public function getAll()
     {
-        $links = Link::all();
-        return response()->json(['code' => 200, 'data' => $links]);
+        try {
+            $links = Link::all();
+            return $this->successResponse($links);
+        } catch (\Exception $exception) {
+            return $this->internalServerErrorResponse($exception);
+        }
     }
 
     public function getByCode($code)
     {
         try {
             $link = Link::where('code', $code)->firstOrFail();
-            return response()->json(['code' => 200, 'data' => $link]);
+            return $this->successResponse($link);
         } catch (\Exception $exception) {
             if ($exception instanceof ModelNotFoundException) {
-                return response()->json(['code' => 404, 'message' => 'Link with given code is not found'], 404);
-            } else $this->unexpectedError();
+                return $this->notFoundResponse('Link with given code is not found');
+            } else {
+                return $this->internalServerErrorResponse($exception);
+            }
         }
     }
 
@@ -38,7 +39,7 @@ class LinkController extends Controller
             $this->validate($request, [
                 'id' => 'required',
                 'code' => 'required',
-                'value' => 'required'
+                'value' => 'required',
             ]);
 
             $link = Link::find($request->id);
@@ -48,13 +49,15 @@ class LinkController extends Controller
             $link->code = $request->code;
             $link->value = $request->value;
             $link->save();
-            return response()->json(['code' => '200', 'message' => 'Success']);
+            return $this->successResponse();
         } catch (\Exception $exception) {
             if ($exception instanceof ValidationException) {
-                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
+                return $this->badRequestResponse($exception);
             } else if ($exception instanceof ModelNotFoundException) {
-                return response()->json(['code' => '404', 'message' => 'Link not found'], 404);
-            } else $this->unexpectedError();
+                return $this->notFoundResponse('Link not found');
+            } else {
+                return $this->internalServerErrorResponse($exception);
+            }
         }
     }
 
@@ -68,18 +71,22 @@ class LinkController extends Controller
             foreach ($request->links as $item) {
                 $link = Link::find($item['id']);
 
-                if (!$link) continue;
+                if (!$link) {
+                    continue;
+                }
 
                 $link->code = $item['code'];
                 $link->value = $item['value'];
                 $link->save();
             }
 
-            return response()->json(['code' => '200', 'message' => 'Success']);
+            return $this->successResponse();
         } catch (\Exception $exception) {
             if ($exception instanceof ValidationException) {
-                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
-            } else $this->unexpectedError();
+                return $this->badRequestResponse($exception);
+            } else {
+                return $this->internalServerErrorResponse($exception);
+            }
         }
     }
 }

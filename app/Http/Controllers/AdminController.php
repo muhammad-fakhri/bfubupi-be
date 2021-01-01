@@ -12,15 +12,14 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 class AdminController extends Controller
 {
 
-    public function unexpectedError()
-    {
-        return response()->json(['code' => '500', 'message' => 'Unexpected error']);
-    }
-
     public function getAllSubadmin()
     {
-        $admins = Admin::all();
-        return response()->json(['code' => '200', 'data' => $admins]);
+        try {
+            $admins = Admin::all();
+            return $this->successResponse($admins);
+        } catch (\Exception $exception) {
+            return $this->internalServerErrorResponse($exception);
+        }
     }
 
     public function getAdminProfile()
@@ -29,9 +28,9 @@ class AdminController extends Controller
             $token = JWTAuth::getToken();
             $apy = JWTAuth::getPayload($token);
             $admin = Admin::find($apy['sub']);
-            return response()->json(['code' => '200', 'data' => $admin]);
+            return $this->successResponse($admin);
         } catch (\Exception $exception) {
-            $this->unexpectedError();
+            return $this->internalServerErrorResponse($exception);
         }
     }
 
@@ -41,21 +40,22 @@ class AdminController extends Controller
             $this->validate($request, [
                 'name' => 'required',
                 'email' => 'required|email|unique:admins,email',
-                'password' => 'required'
+                'password' => 'required',
             ]);
             $admin = new Admin;
             $admin->name = $request->name;
             $admin->email = $request->email;
             $admin->password = Hash::make($request->password);
             $admin->save();
-            return response()->json(['code' => '200', 'message' => 'Success']);
+            return $this->successResponse();
         } catch (\Exception $exception) {
             if ($exception instanceof ValidationException) {
-                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
-            } else $this->unexpectedError();
+                return $this->badRequestResponse($exception);
+            } else {
+                return $this->internalServerErrorResponse($exception);
+            }
         }
     }
-
 
     public function updateSubadmin(Request $request)
     {
@@ -76,11 +76,15 @@ class AdminController extends Controller
                 $admin->password = Hash::make($request->password);
             }
             $admin->save();
-            return response()->json(['code' => '200', 'message' => 'Success']);
+            return $this->successResponse();
         } catch (\Exception $exception) {
             if ($exception instanceof ValidationException) {
-                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
-            } else $this->unexpectedError();
+                return $this->badRequestResponse($exception);
+            } else if ($exception instanceof ModelNotFoundException) {
+                return $this->notFoundResponse('Subadmin not found');
+            } else {
+                return $this->internalServerErrorResponse($exception);
+            }
         }
     }
 
@@ -97,11 +101,13 @@ class AdminController extends Controller
             }
             $admin->delete();
 
-            return response()->json(['code' => '200', 'message' => 'Success']);
+            return $this->successResponse();
         } catch (\Exception $exception) {
             if ($exception instanceof ValidationException) {
-                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
-            } else $this->unexpectedError();
+                return $this->badRequestResponse($exception);
+            } else {
+                return $this->internalServerErrorResponse($exception);
+            }
         }
     }
 }

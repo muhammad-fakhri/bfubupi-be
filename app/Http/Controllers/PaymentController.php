@@ -11,15 +11,14 @@ use Illuminate\Validation\ValidationException;
 
 class PaymentController extends Controller
 {
-    public function unexpectedError()
-    {
-        return response()->json(['code' => '500', 'message' => 'Unexpected error']);
-    }
-
     public function getAllPayment()
     {
-        $payments = Payment::all();
-        return response()->json(['code' => '200', 'data' => $payments]);
+        try {
+            $payments = Payment::all();
+            return $this->successResponse($payments);
+        } catch (\Exception $exception) {
+            return $this->internalServerErrorResponse($exception);
+        }
     }
 
     public function checkPayment($payment_id)
@@ -28,11 +27,11 @@ class PaymentController extends Controller
             $payment = Payment::findOrFail($payment_id);
             $payment->is_checked = true;
             $payment->save();
-            return response()->json(['code' => '200', 'message' => 'Success']);
+            return $this->successResponse();
         } catch (\Exception $exception) {
             if ($exception instanceof ModelNotFoundException) {
-                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
-            } else $this->unexpectedError();
+                return $this->badRequestResponse($exception);
+            } else $this->internalServerErrorResponse($exception);
         }
     }
 
@@ -41,11 +40,11 @@ class PaymentController extends Controller
         try {
             $user = User::findOrFail($user_id);
             $payments = $user->payments;
-            return response()->json(['code' => '200', 'data' => $payments]);
+            return $this->successResponse($payments);
         } catch (\Exception $exception) {
             if ($exception instanceof ModelNotFoundException) {
-                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
-            } else $this->unexpectedError();
+                return $this->badRequestResponse($exception);
+            } else $this->internalServerErrorResponse($exception);
         }
     }
 
@@ -78,13 +77,13 @@ class PaymentController extends Controller
                 'payment_file_name' => $filename,
                 'payment_file_path' => $path . $filename
             ]);
-            return response()->json(['code' => '200', 'message' => 'Success']);
+            return $this->successResponse($payment);
         } catch (\Exception $exception) {
             if ($exception instanceof ValidationException) {
-                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
+                return $this->badRequestResponse($exception);
             } elseif ($exception instanceof ModelNotFoundException) {
-                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
-            } else $this->unexpectedError();
+                return $this->notFoundResponse('User not found');
+            } else $this->internalServerErrorResponse($exception);
         }
     }
 
@@ -101,13 +100,13 @@ class PaymentController extends Controller
 
             // Delete payment model
             $payment->delete();
-            return response()->json(['code' => '200', 'message' => 'Success']);
+            return $this->successResponse();
         } catch (\Exception $exception) {
             if ($exception instanceof ValidationException) {
-                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
+                return $this->badRequestResponse($exception);
             } elseif ($exception instanceof ModelNotFoundException) {
-                return response()->json(['code' => '400', 'message' => 'Bad request'], 400);
-            } else $this->unexpectedError();
+                return $this->notFoundResponse('Payment not found');
+            } else $this->internalServerErrorResponse($exception);
         }
     }
 }

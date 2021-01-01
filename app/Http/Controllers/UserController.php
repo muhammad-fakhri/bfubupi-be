@@ -20,24 +20,23 @@ class UserController extends Controller
         //
     }
 
-    public function unexpectedError()
-    {
-        return response()->json(['code' => '500', 'message' => 'Unexpected error']);
-    }
-
     public function getAllUser()
     {
-        $users = User::all();
-        return response()->json(['code' => '200', 'data' => $users]);
+        try {
+            $users = User::all();
+            return $this->successResponse($users);
+        } catch (\Exception $exception) {
+            return $this->internalServerErrorResponse($exception);
+        }
     }
 
     public function getUserProfile()
     {
         try {
             $user = JWTAuth::parseToken()->authenticate();
-            return response()->json(['code' => '200', 'data' => $user]);
+            return $this->successResponse($user);
         } catch (\Exception $exception) {
-            $this->unexpectedError();
+            $this->internalServerErrorResponse($exception);
         }
     }
 
@@ -53,13 +52,13 @@ class UserController extends Controller
             $user->name = $request->name;
             $user->school_name = $request->school_name;
             $user->save();
-            return response()->json(['code' => '200', 'message' => 'Success']);
+            return $this->successResponse();
         } catch (\Exception $exception) {
             if ($exception instanceof ValidationException) {
-                return response()->json(['code' => '400', 'message' => 'Bad Request'], 400);
+                return $this->badRequestResponse($exception);
             } else if ($exception instanceof ModelNotFoundException) {
-                return response()->json(['code' => '400', 'message' => 'Bad Request'], 400);
-            } else $this->unexpectedError();
+                return $this->notFoundResponse('User not found');
+            } else $this->internalServerErrorResponse($exception);
         }
     }
 }
