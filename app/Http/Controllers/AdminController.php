@@ -63,7 +63,7 @@ class AdminController extends Controller
             $this->validate($request, [
                 'id' => 'required',
                 'name' => 'required',
-                'email' => 'required|email',
+                'email' => 'required|email|unique:admins,email,' . $request->id,
             ]);
 
             $admin = Admin::find($request->id);
