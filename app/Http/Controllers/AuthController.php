@@ -111,22 +111,20 @@ class AuthController extends Controller
             $user->email_verify_date = Carbon::now();
             $user->save();
 
-            // TODO: redirect to success verify email page in frontend
-            return $this->successResponse(null, 'Verify success');
+            // If success, redirect to verify success page in frontend
+            return redirect(env('FRONTEND_URL') . '/verify-email/success');
         } catch (\Exception $exception) {
+            // If failed, redirect to verify failed page in frontend
             if ($exception instanceof ValidationException) {
-                // TODO: redirect to failed verify email page in frontend
-                return $this->badRequestResponse($exception);
+                return redirect(env('FRONTEND_URL') . '/verify-email/failed');
             } else if ($exception instanceof ModelNotFoundException) {
                 // Account not exist
-                // TODO: redirect to failed verify email page in frontend
-                return $this->badRequestResponse($exception);
+                return redirect(env('FRONTEND_URL') . '/verify-email/failed');
             } else if ($exception instanceof InvalidPayloadException) {
                 // Account already verified or token is invalid
-                // TODO: redirect to failed verify email page in frontend
-                return $this->unprocessableEntityResponse('Invalid token');
+                return redirect(env('FRONTEND_URL') . '/verify-email/failed');
             } else {
-                return $this->internalServerErrorResponse($exception);
+                return redirect(env('FRONTEND_URL') . '/verify-email/failed');
             }
         }
     }
@@ -195,7 +193,7 @@ class AuthController extends Controller
             $data = array('name' => $user->name, 'email' => $request->email, 'token' => $token);
             Mail::to($request->email)->send(new ForgotPassword((object) $data));
 
-            return $this->successResponse();
+            return $this->successResponse(null, 'Link for reset your password has been sent to your e-mail');
         } catch (\Exception $exception) {
             if ($exception instanceof ValidationException) {
                 return $this->badRequestResponse($exception);
@@ -232,7 +230,7 @@ class AuthController extends Controller
                 throw new InvalidPayloadException();
             }
 
-            return $this->successResponse();
+            return $this->successResponse(null, 'Your password has been reset successfully');
         } catch (\Exception $exception) {
             if ($exception instanceof ValidationException) {
                 return $this->badRequestResponse($exception);
