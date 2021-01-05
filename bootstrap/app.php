@@ -72,9 +72,11 @@ $app->configure('app');
 |
 */
 
-$app->middleware([
-    Fruitcake\Cors\HandleCors::class,
-]);
+if (env('APP_ENV') == "local") {
+    $app->middleware([
+        Fruitcake\Cors\HandleCors::class,
+    ]);
+}
 
 $app->routeMiddleware([
     'auth' => App\Http\Middleware\Authenticate::class,
@@ -101,8 +103,10 @@ $app->register(App\Providers\AuthServiceProvider::class);
 $app->register(Flipbox\LumenGenerator\LumenGeneratorServiceProvider::class);
 $app->register(Tymon\JWTAuth\Providers\LumenServiceProvider::class);
 $app->register(Illuminate\Mail\MailServiceProvider::class);
-$app->register(Fruitcake\Cors\CorsServiceProvider::class);
-$app->configure('cors');
+if (env('APP_ENV') == "local") {
+    $app->register(Fruitcake\Cors\CorsServiceProvider::class);
+    $app->configure('cors');
+}
 
 $app->configure('mail');
 $app->alias('mailer', Illuminate\Mail\Mailer::class);
